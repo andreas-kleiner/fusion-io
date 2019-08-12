@@ -59,23 +59,53 @@ extern "C" {
 
   static PyObject* fio_error;
 
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef fio_py =
+  {
+      PyModuleDef_HEAD_INIT,
+      "fio_py",
+      "",
+      -1,
+      fio_methods
+  };
+  
+  PyMODINIT_FUNC PyInit_fio_py()
+#else
   PyMODINIT_FUNC initfio_py()
+#endif
   {
     PyObject *m, *d;
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&fio_py);
+#else
     m = Py_InitModule("fio_py", fio_methods);
+#endif
+    
     if(m==NULL)
+#if PY_MAJOR_VERSION >= 3
+      return NULL;
+#else
       return;
+#endif
+      
     fio_error = PyErr_NewException("fio.error", NULL, NULL);
     Py_INCREF(fio_error);
     PyModule_AddObject(m, "error", fio_error);
 
     d = PyModule_GetDict(m);
+#if PY_MAJOR_VERSION >= 3
+    PyDict_SetItemString(d, "test", PyLong_FromLong(12));
+#else
     PyDict_SetItemString(d, "test", PyInt_FromLong(12));
+#endif
 
 #undef FUSION_IO_DEFS_H
 #define PYTHON
 #define PYTHON_DICT d
 #include "fusion_io_defs.h"
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#endif
   }
 }
 
@@ -252,8 +282,11 @@ PyObject* fio_get_available_fields_py(PyObject* self, PyObject *args)
 
   PyObject* list = PyList_New(n);
   for(int i=0; i<n; i++) 
+#if PY_MAJOR_VERSION >= 3
+    PyList_SET_ITEM(list, i, PyLong_FromLong(f[i]));
+#else
     PyList_SET_ITEM(list, i, PyInt_FromLong(f[i]));
-
+#endif
   return list;
 }
 
